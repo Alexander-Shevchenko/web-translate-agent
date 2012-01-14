@@ -2,9 +2,9 @@
 //
 
 #include "stdafx.h"
+#include <string>
 #include "Shellapi.h"
-#include "WebLingvo.h"
-#include "HotkeyHandler.h"
+#include "WebDict.h"
 
 static HHOOK keyHook;
 static std::wstring clipStr; // ClipBoard string

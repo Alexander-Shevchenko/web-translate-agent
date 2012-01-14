@@ -15,11 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <None Include="ReadMe.txt" />
     <None Include="small.ico">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="WebLingvo.ico">
       <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>
@@ -33,10 +29,7 @@
     <ClInclude Include="Resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="WebLingvo.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="HotkeyHandler.h">
+    <ClInclude Include="WebDict.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -44,15 +37,12 @@
     <ClCompile Include="stdafx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="WebLingvo.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="HotkeyHandler.cpp">
+    <ClCompile Include="WebDict.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="WebLingvo.rc">
+    <ResourceCompile Include="WebDict.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
   </ItemGroup>
