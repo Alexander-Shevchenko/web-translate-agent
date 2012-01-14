@@ -2,56 +2,91 @@
 //
 
 #include "stdafx.h"
+#include "Shellapi.h"
 #include "WebLingvo.h"
 #include "HotkeyHandler.h"
+
+static HHOOK keyHook;
+static std::wstring clipStr; // ClipBoard string
+
+LRESULT CALLBACK LowLevelKeyboardProc(INT nCode, WPARAM wParam, LPARAM lParam);
+static BOOL CheckClipBoard(DWORD hkTime);
 
 int APIENTRY _tWinMain(HINSTANCE hInstance,
                      HINSTANCE hPrevInstance,
                      LPTSTR    lpCmdLine,
                      int       nCmdShow)
 {
+	// We create the keyboard hook
+	keyHook = SetWindowsHookEx(WH_KEYBOARD_LL, LowLevelKeyboardProc, hInstance, 0);
 
-    RegisterHotKey(
-        NULL,
-        1,
-        MOD_CONTROL | MOD_NOREPEAT,
-		VK_INSERT );  //0x42 is 'b'
- 
     MSG msg = {0};
     while (GetMessage(&msg, NULL, 0, 0) != 0)
     {
-        if (msg.message == WM_HOTKEY)
-        {
-			if (OpenClipboard(NULL)) 
-			{
-				// Retrieve the Clipboard data (specifying that 
 
-				// we want ANSI text (via the CF_TEXT value).
-
-				HANDLE hClipboardData = GetClipboardData(CF_UNICODETEXT);
-
-				// Call GlobalLock so that to retrieve a pointer
-
-				// to the data associated with the handle returned
-
-				// from GetClipboardData.
-
-				LPCWSTR pchData = (LPCWSTR)GlobalLock(hClipboardData);
-
-				//MessageBox(NULL,pchData,NULL, MB_OK);
-
-				GlobalUnlock(hClipboardData);
-
-				// Finally, when finished I simply close the Clipboard
-
-				// which has the effect of unlocking it so that other
-
-				// applications can examine or modify its contents.
-
-				CloseClipboard();
-			}
-		}
     } 
  
     return 0;
+}
+
+// CForTheKidsDlg global functions
+LRESULT CALLBACK LowLevelKeyboardProc(INT nCode, WPARAM wParam, LPARAM lParam)
+{
+    try
+    {
+		// Double Ctrl-C & Ctrl-Ins
+        KBDLLHOOKSTRUCT *pkbhs = (KBDLLHOOKSTRUCT *) lParam;
+        if (HC_ACTION == nCode
+			&&
+				( VK_INSERT == pkbhs->vkCode ||
+				'c' == pkbhs->vkCode || 'C' == pkbhs->vkCode || // Accept both English
+				'ñ' == pkbhs->vkCode || 'Ñ' == pkbhs->vkCode)	// and Russian 'C' key
+			&&
+			WM_KEYUP == wParam
+			&&
+			GetAsyncKeyState (VK_CONTROL) >> ((sizeof(SHORT) * 8) - 1)
+			&&
+			CheckClipBoard(pkbhs->time))
+        {
+			std::wstring url(_T("http://www.lingvo.ua/ru/Search/en-ru/"));
+			url += clipStr;
+			ShellExecute(NULL, _TEXT("open"), url.data(), NULL, NULL, SW_SHOWNORMAL);
+        }
+        CallNextHookEx (keyHook, nCode, wParam, lParam);
+    }
+    catch(...)
+    {
+    }
+    return 0;
+}
+
+static BOOL CheckClipBoard(DWORD hkTime)
+{
+	static DWORD prevTime;
+
+	BOOL bRet = FALSE;
+
+	if (OpenClipboard(NULL)) 
+	{
+		HANDLE hClipboardData = GetClipboardData(CF_UNICODETEXT);
+		LPCWSTR pchData = (LPCWSTR)GlobalLock(hClipboardData);
+
+		if(pchData)
+		{
+			if(!clipStr.empty() && !_tcscmp(clipStr.data(),pchData))
+			{
+				bRet = (hkTime - prevTime <= 1000) ? TRUE : FALSE; // Double hotkey considered just within 1 second or less time
+			}
+			else
+			{
+				clipStr = pchData;
+			}
+			prevTime = hkTime;
+		}
+
+		GlobalUnlock(hClipboardData);
+		CloseClipboard();
+	}
+
+	return bRet;
 }
