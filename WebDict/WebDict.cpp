@@ -5,12 +5,13 @@
 #include <string>
 #include "Shellapi.h"
 #include "WebDict.h"
+#include "WebDictBrowser.h"
 
 static HHOOK keyHook;
 static std::wstring clipStr; // ClipBoard string
 
 LRESULT CALLBACK LowLevelKeyboardProc(INT nCode, WPARAM wParam, LPARAM lParam);
-static BOOL CheckClipBoard(DWORD hkTime);
+static BOOL _CheckClipBoard(DWORD hkTime);
 
 int APIENTRY _tWinMain(HINSTANCE hInstance,
                      HINSTANCE hPrevInstance,
@@ -34,7 +35,7 @@ LRESULT CALLBACK LowLevelKeyboardProc(INT nCode, WPARAM wParam, LPARAM lParam)
 {
     try
     {
-		// Double Ctrl-C & Ctrl-Ins
+		// Process double Ctrl-C & Ctrl-Ins hotkeys
         KBDLLHOOKSTRUCT *pkbhs = (KBDLLHOOKSTRUCT *) lParam;
         if (HC_ACTION == nCode
 			&&
@@ -46,13 +47,31 @@ LRESULT CALLBACK LowLevelKeyboardProc(INT nCode, WPARAM wParam, LPARAM lParam)
 			&&
 			GetAsyncKeyState (VK_CONTROL) >> ((sizeof(SHORT) * 8) - 1)
 			&&
-			CheckClipBoard(pkbhs->time))
+			_CheckClipBoard(pkbhs->time))
         {
 			std::wstring url(_T("http://www.lingvo.ua/ru/Search/en-ru/"));
 			url += clipStr;
+
+			// Hack imitating Alt pressing so new browser window becomes top (issue with Chrome)
+			// http://www.codeproject.com/Tips/76427/How-to-bring-window-to-top-with-SetForegroundWindo
+			BYTE keyState[256] = {0};
+			if (GetKeyboardState((LPBYTE)&keyState) &&
+				!(keyState[VK_MENU] & 0x80))
+			{
+				keybd_event(VK_MENU, 0, KEYEVENTF_EXTENDEDKEY, 0);
+			}
+
 			ShellExecute(NULL, _TEXT("open"), url.data(), NULL, NULL, SW_SHOWNORMAL);
+
+			// Hack, part 2 (see above)
+			if (GetKeyboardState((LPBYTE)&keyState) &&
+				!(keyState[VK_MENU] & 0x80))
+			{
+				keybd_event(VK_MENU, 0, KEYEVENTF_EXTENDEDKEY | KEYEVENTF_KEYUP, 0);
+			}
         }
-        CallNextHookEx (keyHook, nCode, wParam, lParam);
+
+		CallNextHookEx (keyHook, nCode, wParam, lParam);
     }
     catch(...)
     {
@@ -60,7 +79,7 @@ LRESULT CALLBACK LowLevelKeyboardProc(INT nCode, WPARAM wParam, LPARAM lParam)
     return 0;
 }
 
-static BOOL CheckClipBoard(DWORD hkTime)
+static BOOL _CheckClipBoard(DWORD hkTime)
 {
 	static DWORD prevTime;
 

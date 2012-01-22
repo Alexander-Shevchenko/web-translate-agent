@@ -1,0 +1,10 @@
+# git ignore file
+*.*sdf
+*.user
+*.suo
+*.ilk
+Debug/
+*/x64/
+*/Debug/
+*/Release/
+ipch/
