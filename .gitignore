@@ -4,7 +4,7 @@
 *.suo
 *.ilk
 Debug/
-*/x64/
-*/Debug/
-*/Release/
+WebDict/x64/
+WebDict/Debug/
+WebDict/Release/
 ipch/
