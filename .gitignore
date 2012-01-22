@@ -2,6 +2,7 @@
 *.*sdf
 *.user
 *.suo
+*.aps
 *.ilk
 Debug/
 WebDict/x64/
