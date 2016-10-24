@@ -9,9 +9,11 @@
 
 static HHOOK keyHook;
 static std::wstring clipStr; // ClipBoard string
+static std::wstring dictURL;
 
 LRESULT CALLBACK LowLevelKeyboardProc(INT nCode, WPARAM wParam, LPARAM lParam);
 static BOOL _CheckClipBoard(DWORD hkTime);
+static void _buildURL(std::wstring& dictURL, const std::wstring& translWord);
 
 int APIENTRY _tWinMain(HINSTANCE hInstance,
                      HINSTANCE hPrevInstance,
@@ -21,6 +23,11 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 	// We create the keyboard hook
 	keyHook = SetWindowsHookEx(WH_KEYBOARD_LL, LowLevelKeyboardProc, hInstance, 0);
 
+    if (!lpCmdLine || *lpCmdLine == '\0')
+        dictURL = _T("http://www.lingvo.ua/ru/Search/en-ru/%s");
+    else
+        dictURL = lpCmdLine;
+
     MSG msg = {0};
     while (GetMessage(&msg, NULL, 0, 0) != 0)
     {
@@ -28,6 +35,16 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
     } 
  
     return 0;
+}
+
+// Build URL basing on copied phrase and URL-template
+static void _buildURL(std::wstring& dictURL, const std::wstring& translWord)
+{
+    size_t szReplPos = dictURL.find(_T("%s"), 0);
+    if (szReplPos == std::string::npos)
+        dictURL += translWord;
+    else
+        dictURL.replace(szReplPos, _tcslen(_T("%s")), translWord);
 }
 
 // CForTheKidsDlg global functions
@@ -49,8 +66,8 @@ LRESULT CALLBACK LowLevelKeyboardProc(INT nCode, WPARAM wParam, LPARAM lParam)
 			&&
 			_CheckClipBoard(pkbhs->time))
         {
-			std::wstring url(_T("http://www.lingvo.ua/ru/Search/en-ru/"));
-			url += clipStr;
+             std::wstring urlBld(dictURL);
+             _buildURL(urlBld, clipStr);
 
 			// Hack imitating Alt pressing so new browser window becomes top (issue with Chrome)
 			// http://www.codeproject.com/Tips/76427/How-to-bring-window-to-top-with-SetForegroundWindo
@@ -61,7 +78,7 @@ LRESULT CALLBACK LowLevelKeyboardProc(INT nCode, WPARAM wParam, LPARAM lParam)
 				keybd_event(VK_MENU, 0, KEYEVENTF_EXTENDEDKEY, 0);
 			}
 
-			ShellExecute(NULL, _TEXT("open"), url.data(), NULL, NULL, SW_SHOWNORMAL);
+			ShellExecute(NULL, _TEXT("open"), urlBld.data(), NULL, NULL, SW_SHOWNORMAL);
 
 			// Hack, part 2 (see above)
 			if (GetKeyboardState((LPBYTE)&keyState) &&
@@ -75,6 +92,7 @@ LRESULT CALLBACK LowLevelKeyboardProc(INT nCode, WPARAM wParam, LPARAM lParam)
     }
     catch(...)
     {
+
     }
     return 0;
 }

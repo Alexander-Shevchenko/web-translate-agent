@@ -9,3 +9,6 @@ WebDict/x64/
 WebDict/Debug/
 WebDict/Release/
 ipch/
+*.opendb
+*.iobj
+*.ipdb
