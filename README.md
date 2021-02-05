@@ -8,4 +8,4 @@ That cant be changed using a command line startup argument, say:<br>
 * WebDict.exe "http://translate.google.com/#auto/en/%s"<br>
  where %s is what will be replaced with the clipboard content.<br>
 <br>
-Tested with Windows 8.1 (x64).
+Tested with Windows 8.1 & 10 (x64).
